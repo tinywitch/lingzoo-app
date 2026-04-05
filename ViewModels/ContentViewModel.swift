@@ -65,4 +65,36 @@ class ContentViewModel: ObservableObject {
         }
         isLoadingPackDetails = false
     }
+
+    @Published var isUpdatingPack = false
+    
+    func togglePackLearning(packId: String, isLearning: Bool) async {
+        isUpdatingPack = true
+        errorMessage = nil
+        
+        do {
+            let value = isLearning ? 1: 0
+            let response: BaseResponse<Pack> = try await APIClient.shared.requestMultipart(
+                path: "/packs/\(packId)",
+                method: "PUT",
+                parameters: ["is_learning": value.description],
+                imageData: nil
+            )
+            
+            if let updatedPack = response.data, let existingPack = self.currentPackDetails {
+                self.currentPackDetails = Pack(
+                    id: existingPack.id,
+                    category_id: existingPack.category_id,
+                    name: updatedPack.name,
+                    featured_image: existingPack.featured_image,
+                    is_learning: updatedPack.is_learning,
+                    category: existingPack.category,
+                    words: existingPack.words
+                )
+            }
+        } catch {
+            self.errorMessage = "Failed to update pack: \(error.localizedDescription)"
+        }
+        isUpdatingPack = false
+    }
 }

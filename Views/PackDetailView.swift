@@ -26,8 +26,25 @@ struct PackDetailView: View {
     @ViewBuilder
     private var packContentView: some View {
         if let pack = viewModel.currentPackDetails {
-            if let words = pack.words, !words.isEmpty {
-                List(words, id: \.id) { word in
+            VStack(spacing: 0) {
+                Toggle(isOn: Binding(
+                    get: { pack.is_learning == 1 },
+                    set: { newValue in
+                        Task {
+                            await viewModel.togglePackLearning(packId: pack.id, isLearning: newValue)
+                        }
+                    }
+                )) {
+                    Text("Currently Learning")
+                        .font(.headline)
+                }
+                .padding()
+                .disabled(viewModel.isUpdatingPack)
+                
+                Divider()
+                
+                if let words = pack.words, !words.isEmpty {
+                    List(words, id: \.id) { word in
                     NavigationLink(destination: WordDetailView(word: word)) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(word.word)
@@ -46,7 +63,10 @@ struct PackDetailView: View {
             } else {
                 Text("No words in this pack yet.")
                     .foregroundColor(.gray)
+                    .padding()
+                Spacer()
             }
+        } // End of VStack
         } else {
             Color.clear
         }
