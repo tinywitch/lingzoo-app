@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import WidgetKit
 
 @MainActor
 class ContentViewModel: ObservableObject {
@@ -91,6 +92,24 @@ class ContentViewModel: ObservableObject {
                     category: existingPack.category,
                     words: existingPack.words
                 )
+                
+                // Update Local Storage for Widget
+                if isLearning {
+                    var widgetWords: [WidgetWord] = []
+                    if let words = existingPack.words {
+                        for word in words {
+                            let meaningsStr = word.meaning.map { $0.meaning }
+                            let widgetWord = WidgetWord(packId: packId, word: word.word, meanings: meaningsStr)
+                            widgetWords.append(widgetWord)
+                        }
+                    }
+                    WidgetDataManager.shared.addWords(packId: packId, newWords: widgetWords)
+                } else {
+                    WidgetDataManager.shared.removeWords(packId: packId)
+                }
+                
+                // Reload widget timelines
+                WidgetCenter.shared.reloadAllTimelines()
             }
         } catch {
             self.errorMessage = "Failed to update pack: \(error.localizedDescription)"
